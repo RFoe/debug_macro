@@ -13,26 +13,19 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest]
         compiler: 
-          - { name: gcc, cpp: 17, cc: g++, c: gcc }
           - { name: gcc, cpp: 20, cc: g++, c: gcc }
           - { name: gcc, cpp: 23, cc: g++, c: gcc }
-          - { name: clang, cpp: 17, cc: clang++, c: clang }
           - { name: clang, cpp: 20, cc: clang++, c: clang }
           - { name: clang, cpp: 23, cc: clang++, c: clang }
-          - { name: msvc, cpp: 17, cc: cl, c: cl }
           - { name: msvc, cpp: 20, cc: cl, c: cl }
           - { name: msvc, cpp: 23, cc: cl, c: cl }
         build_type: [Debug, Release]
         exclude:
           # 排除不兼容的组合
           - os: windows-latest
-            compiler: { name: gcc, cpp: 17, cc: g++, c: gcc }
-          - os: windows-latest
             compiler: { name: gcc, cpp: 20, cc: g++, c: gcc }
           - os: windows-latest
             compiler: { name: gcc, cpp: 23, cc: g++, c: gcc }
-          - os: windows-latest
-            compiler: { name: clang, cpp: 17, cc: clang++, c: clang }
           - os: windows-latest
             compiler: { name: clang, cpp: 20, cc: clang++, c: clang }
           - os: windows-latest
@@ -75,13 +68,15 @@ jobs:
 
     # 配置 CMake
     - name: Configure CMake
+      shell: bash
       working-directory: ${{runner.workspace}}/build
       run: |
-        cmake $GITHUB_WORKSPACE \
-          -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
-          -DENABLE_TESTS=ON \
-          -DENABLE_BENCHMARKS=ON \
-          ${{ matrix.compiler.name == 'msvc' && runner.os == 'Windows' && '-G "Visual Studio 17 2022"' || '' }}
+        cmake \
+          $GITHUB_WORKSPACE \
+          -DCMAKE_CXX_COMPILER=${{matrix.job.compiler}} \
+          -DCMAKE_CXX_STANDARD=${{matrix.job.cpp_standard}} \
+          -DCMAKE_CXX_STANDARD_REQUIRED=ON \
+          -DCMAKE_BUILD_TYPE=${{matrix.job.build_type}}
 
     # 构建
     - name: Build
