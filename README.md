@@ -1,18 +1,18 @@
 <div align="center">
-  <img src="docs/images/logo.png" alt="_`debug_macro` L_ogo" width="200"/>
+  <img src="docs/images/logo.png" alt="`debug_macro` Logo" width="200"/>
 </div>
-__
+
 <div align="center">
   <h1 align="center">🌈 debug_macro</h1>
   <p align="center">
     <i><b>一个现代、强大的C++23日志输出库</b></i>
     <br />
-    <a href="https://github.com/RFoe/debug_macro"><strong>探索项目文档 »</strong></a>
+    <a href="https://github.com/RFoe/debug_macro"><strong>document »</strong></a>
    <br />
     <br />
-    <a href="https://github.com/RFoe/debug_macro/issues"><i>报告Bug</i></a>
+    <a href="https://github.com/RFoe/debug_macro/issues"><i>bug report</i></a>
     ·
-    <a href="https://github.com/RFoe/debug_macro/issues"><i>请求特性</i></a>
+    <a href="https://github.com/RFoe/debug_macro/issues"><i>feature request</i></a>
   </p>
 </div>
 
@@ -23,7 +23,7 @@ __
 [![License](https://img.shields.io/github/license/RFoe/debug_macro)](https://github.com/RFoe/debug_macro/blob/main/LICENSE)
 [![C++23](https://img.shields.io/badge/C%2B%2B-23-blue.svg)](https://en.cppreference.com/w/cpp/compiler_support)
 [![Build Status](https://github.com/RFoe/debug_macro/workflows/_`debug_macro`%2_0CI/badge.svg)](https://github.com/RFoe/debug_macro/actions)
-[![Benchmark](https://img.shields.io/badge/benchmarks-passing-brightgreen)](https://_github_.com/RFoe/debug_macro/actions)
+[![Benchmark](https://img.shields.io/badge/benchmarks-passing-brightgreen)](https://github_.com/RFoe/debug_macro/actions)
 
 ## 📋 目录
 
