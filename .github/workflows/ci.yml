@@ -1,0 +1,47 @@
+- name: Create Build Environment
+  run: cmake -E make_directory ${{runner.workspace}}/build
+
+- name: Configure CMake
+  shell: bash
+  working-directory: ${{runner.workspace}}/build
+  run: |
+    cmake \
+      $GITHUB_WORKSPACE \
+      -DCMAKE_CXX_COMPILER=${{matrix.job.compiler}} \
+      -DCMAKE_CXX_STANDARD=${{matrix.job.cpp_standard}} \
+      -DCMAKE_CXX_STANDARD_REQUIRED=ON \
+      -DCMAKE_BUILD_TYPE=${{matrix.job.build_type}} \
+      -DENABLE_TESTS=ON
+
+- name: Build
+  working-directory: ${{runner.workspace}}/build
+  shell: bash
+  run: cmake --build . --config ${{matrix.job.build_type}}
+
+# Windows 特殊处理
+- name: "Copy executables (Windows)"
+  if: runner.os == 'Windows'
+  working-directory: ${{runner.workspace}}/build
+  shell: bash
+  run: |
+    mkdir -p executables
+    cp ${{matrix.job.build_type}}/*.exe executables/
+
+# 运行示例
+- name: Run Example
+  working-directory: ${{runner.workspace}}/build
+  shell: bash
+  run: |
+    if [ -f "./basic_usage_example" ]; then
+      ./basic_usage_example
+    elif [ -f "./examples/basic_usage_example" ]; then
+      ./examples/basic_usage_example
+    fi
+
+# 运行测试
+- name: Run Tests
+  working-directory: ${{runner.workspace}}/build
+  shell: bash
+  run: |
+    # 使用 ctest 运行测试
+    ctest -V --output-on-failure
