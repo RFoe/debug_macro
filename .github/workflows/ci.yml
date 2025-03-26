@@ -1,47 +1,119 @@
-- name: Create Build Environment
-  run: cmake -E make_directory ${{runner.workspace}}/build
+name: Comprehensive Debug Macro CI
 
-- name: Configure CMake
-  shell: bash
-  working-directory: ${{runner.workspace}}/build
-  run: |
-    cmake \
-      $GITHUB_WORKSPACE \
-      -DCMAKE_CXX_COMPILER=${{matrix.job.compiler}} \
-      -DCMAKE_CXX_STANDARD=${{matrix.job.cpp_standard}} \
-      -DCMAKE_CXX_STANDARD_REQUIRED=ON \
-      -DCMAKE_BUILD_TYPE=${{matrix.job.build_type}} \
-      -DENABLE_TESTS=ON
+on: 
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
 
-- name: Build
-  working-directory: ${{runner.workspace}}/build
-  shell: bash
-  run: cmake --build . --config ${{matrix.job.build_type}}
+jobs:
+  build-and-test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        compiler: 
+          - { name: gcc, cpp: 17, cc: g++, c: gcc }
+          - { name: gcc, cpp: 20, cc: g++, c: gcc }
+          - { name: gcc, cpp: 23, cc: g++, c: gcc }
+          - { name: clang, cpp: 17, cc: clang++, c: clang }
+          - { name: clang, cpp: 20, cc: clang++, c: clang }
+          - { name: clang, cpp: 23, cc: clang++, c: clang }
+          - { name: msvc, cpp: 17, cc: cl, c: cl }
+          - { name: msvc, cpp: 20, cc: cl, c: cl }
+          - { name: msvc, cpp: 23, cc: cl, c: cl }
+        build_type: [Debug, Release]
+        exclude:
+          # Exclude some combinations to reduce matrix size
+          - os: windows-latest
+            compiler: { name: gcc, cpp: 17, cc: g++, c: gcc }
+          - os: windows-latest
+            compiler: { name: gcc, cpp: 20, cc: g++, c: gcc }
+          - os: windows-latest
+            compiler: { name: gcc, cpp: 23, cc: g++, c: gcc }
+          - os: windows-latest
+            compiler: { name: clang, cpp: 17, cc: clang++, c: clang }
+          - os: windows-latest
+            compiler: { name: clang, cpp: 20, cc: clang++, c: clang }
+          - os: windows-latest
+            compiler: { name: clang, cpp: 23, cc: clang++, c: clang }
 
-# Windows 特殊处理
-- name: "Copy executables (Windows)"
-  if: runner.os == 'Windows'
-  working-directory: ${{runner.workspace}}/build
-  shell: bash
-  run: |
-    mkdir -p executables
-    cp ${{matrix.job.build_type}}/*.exe executables/
+    runs-on: ${{ matrix.os }}
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: recursive
 
-# 运行示例
-- name: Run Example
-  working-directory: ${{runner.workspace}}/build
-  shell: bash
-  run: |
-    if [ -f "./basic_usage_example" ]; then
-      ./basic_usage_example
-    elif [ -f "./examples/basic_usage_example" ]; then
-      ./examples/basic_usage_example
-    fi
+    # Setup compilers
+    - name: Setup GCC
+      if: matrix.compiler.name == 'gcc'
+      uses: egor-tensin/setup-gcc@v1
+      with:
+        version: latest
+        platform: x64
 
-# 运行测试
-- name: Run Tests
-  working-directory: ${{runner.workspace}}/build
-  shell: bash
-  run: |
-    # 使用 ctest 运行测试
-    ctest -V --output-on-failure
+    - name: Setup Clang
+      if: matrix.compiler.name == 'clang'
+      uses: egor-tensin/setup-clang@v1
+      with:
+        version: latest
+        platform: x64
+
+    # Setup CMake
+    - name: Setup CMake
+      uses: lukka/get-cmake@latest
+
+    # Create build directory
+    - name: Create Build Environment
+      run: cmake -E make_directory ${{runner.workspace}}/build
+
+    # Configure CMake
+    - name: Configure CMake
+      shell: bash
+      working-directory: ${{runner.workspace}}/build
+      env:
+        CC: ${{ matrix.compiler.c }}
+        CXX: ${{ matrix.compiler.cc }}
+      run: |
+        cmake $GITHUB_WORKSPACE \
+          -DCMAKE_CXX_COMPILER=${{ matrix.compiler.cc }} \
+          -DCMAKE_C_COMPILER=${{ matrix.compiler.c }} \
+          -DCMAKE_CXX_STANDARD=${{ matrix.compiler.cpp }} \
+          -DCMAKE_CXX_STANDARD_REQUIRED=ON \
+          -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
+          -DENABLE_TESTS=ON \
+          -DENABLE_BENCHMARKS=ON
+
+    # Build
+    - name: Build
+      working-directory: ${{runner.workspace}}/build
+      run: cmake --build . --config ${{ matrix.build_type }}
+
+    # Run Tests using CTest
+    - name: Run Tests
+      working-directory: ${{runner.workspace}}/build
+      run: ctest -V -C ${{ matrix.build_type }}
+
+    # Example binaries
+    - name: Run Example Binaries
+      working-directory: ${{runner.workspace}}/build
+      run: |
+        if [ "${{ matrix.os }}" == "windows-latest" ]; then
+          ./${{ matrix.build_type }}/debug_macro_basic_example.exe
+          ./${{ matrix.build_type }}/debug_macro_advanced_example.exe
+        else
+          ./debug_macro_basic_example
+          ./debug_macro_advanced_example
+        fi
+
+  # Optional: Additional workflow for code analysis
+  code-analysis:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Run Cppcheck
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y cppcheck
+        cppcheck --enable=all --suppress=missingIncludeSystem .
