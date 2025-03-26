@@ -22,8 +22,8 @@
 [![GitHub forks](https://img.shields.io/github/forks/RFoe/debug_macro?style=social)](https://github.com/RFoe/debug_macro)
 [![License](https://img.shields.io/github/license/RFoe/debug_macro)](https://github.com/RFoe/debug_macro/blob/main/LICENSE)
 [![C++23](https://img.shields.io/badge/C%2B%2B-23-blue.svg)](https://en.cppreference.com/w/cpp/compiler_support)
-[![Build Status](https://github.com/RFoe/debug_macro/workflows/_`debug_macro`%2_0CI/badge.svg)](https://github.com/RFoe/debug_macro/actions)
-[![Benchmark](https://img.shields.io/badge/benchmarks-passing-brightgreen)](https://github_.com/RFoe/debug_macro/actions)
+[![Build Status](https://github.com/RFoe/debug_macro/actions/workflows/ci.yml/badge.svg)](https://github.com/RFoe/debug_macro/actions)
+[![Benchmark](https://img.shields.io/badge/benchmarks-passing-brightgreen)](https://github.com/RFoe/debug_macro/actions)
 
 ## 📋 目录
 
