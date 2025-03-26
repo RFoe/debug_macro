@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="docs/images/logo.png" alt="`debug_macro` Logo" width="200"/>
+  <img src="docs/images/logo.png" alt="`debug_macro` Logo" style="max-width: 100%; height: auto;"/>
 </div>
 
 <div align="center">
