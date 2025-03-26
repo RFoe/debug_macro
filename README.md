@@ -27,23 +27,20 @@ __
 
 ## 📋 目录
 
-- [项目概述](#-项目概述)
-- [特性](#-特性)
-- [安装](#-安装)
-- [使用指南](#-使用指南)
-- [高级定制](#-高级定制)
-- [类型支持](#-类型支持)
-- [路线图](#-路线图)
-- [贡献](#-贡献)
-- [许可证](#-许可证)
-- [联系](#-联系)
+- [🌟 项目概述](#-项目概述)
+- [✨ 特性](#-特性)
+- [🔧 安装](#-安装)
+- [📖 使用指南](#-使用指南)
+- [🎨 类型定制](#-类型支持)
+- [🗺️ 路线图](#-路线图)
+- [🤝 贡献](#-贡献)
+- [📄 许可证](#-许可证)
+- [📞 联系](#-联系)
 
-## 🌟 _容器适配器_
+## 🌟 项目概述
 
 `debug_macro` 是一个现代化的C++23日志输出库，专为开发者提供直观、强大的调试输出工具。受Rust `dbg!()` 宏启发，致力于简化日志记录和调试过程。
 
-
-##
 ## ✨ 特性
 
 - 🌈 **彩色日志输出**
@@ -146,10 +143,6 @@ test()
 
 ## 🎨 类型定制
 
-### Formatter 的 `const` 要求
-
-⚠️ **重要提示**：在 `libstdc++` 中，`std::formatter` 的 `format()` 方法**必须**声明为 `const`。这是由于 `__formattable_with` 的 `requires` 表达式强制要求 `formatter` 对象在格式化过程中保持不变。
-
 ```cpp
 // 正确的自定义 formatter 实现
 template <>
@@ -160,18 +153,9 @@ struct std::formatter<YourCustomType> : std::formatter<std::string> {
     }
 };
 ```
+### Formatter 的 `const` 要求
 
-### 自定义类型支持
-如需支持自定义类型，请特化 `std::formatter`：
-
-```cpp
-template <>
-struct std::formatter<YourType> : std::formatter<std::string> {
-    auto format(const YourType& obj, format_context& ctx) const {
-        // 自定义格式化逻辑
-    }
-};
-```
+⚠️ **_重要提示_**：在 `libstdc++` 中，`std::formatter` 的 `format()` 方法**必须**声明为 `const`。这是由于 `__formattable_with` 的 `requires` 表达式强制要求 `formatter` 对象在格式化过程中保持不变。
 
 ## 🌟 类型支持
 
