@@ -24,7 +24,7 @@ jobs:
           - { name: msvc, cpp: 23, cc: cl, c: cl }
         build_type: [Debug, Release]
         exclude:
-          # Exclude some combinations to reduce matrix size
+          # 排除不兼容的组合
           - os: windows-latest
             compiler: { name: gcc, cpp: 17, cc: g++, c: gcc }
           - os: windows-latest
@@ -44,61 +44,61 @@ jobs:
       with:
         submodules: recursive
 
-    # Setup compilers
+    # 设置编译器
+    - name: Setup MSVC
+      if: matrix.compiler.name == 'msvc' && runner.os == 'Windows'
+      uses: microsoft/setup-msbuild@v1.1
+      with:
+        vs-version: latest
+
     - name: Setup GCC
-      if: matrix.compiler.name == 'gcc'
+      if: matrix.compiler.name == 'gcc' && runner.os == 'Linux'
       uses: egor-tensin/setup-gcc@v1
       with:
         version: latest
         platform: x64
 
     - name: Setup Clang
-      if: matrix.compiler.name == 'clang'
+      if: matrix.compiler.name == 'clang' && runner.os == 'Linux'
       uses: egor-tensin/setup-clang@v1
       with:
         version: latest
         platform: x64
 
-    # Setup CMake
+    # 设置 CMake
     - name: Setup CMake
       uses: lukka/get-cmake@latest
 
-    # Create build directory
+    # 创建构建目录
     - name: Create Build Environment
       run: cmake -E make_directory ${{runner.workspace}}/build
 
-    # Configure CMake
+    # 配置 CMake
     - name: Configure CMake
-      shell: bash
       working-directory: ${{runner.workspace}}/build
-      env:
-        CC: ${{ matrix.compiler.c }}
-        CXX: ${{ matrix.compiler.cc }}
       run: |
         cmake $GITHUB_WORKSPACE \
-          -DCMAKE_CXX_COMPILER=${{ matrix.compiler.cc }} \
-          -DCMAKE_C_COMPILER=${{ matrix.compiler.c }} \
-          -DCMAKE_CXX_STANDARD=${{ matrix.compiler.cpp }} \
-          -DCMAKE_CXX_STANDARD_REQUIRED=ON \
           -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
           -DENABLE_TESTS=ON \
-          -DENABLE_BENCHMARKS=ON
+          -DENABLE_BENCHMARKS=ON \
+          ${{ matrix.compiler.name == 'msvc' && runner.os == 'Windows' && '-G "Visual Studio 17 2022"' || '' }}
 
-    # Build
+    # 构建
     - name: Build
       working-directory: ${{runner.workspace}}/build
       run: cmake --build . --config ${{ matrix.build_type }}
 
-    # Run Tests using CTest
+    # 运行测试
     - name: Run Tests
       working-directory: ${{runner.workspace}}/build
       run: ctest -V -C ${{ matrix.build_type }}
 
-    # Example binaries
+    # 运行示例二进制文件
     - name: Run Example Binaries
       working-directory: ${{runner.workspace}}/build
+      shell: bash
       run: |
-        if [ "${{ matrix.os }}" == "windows-latest" ]; then
+        if [ "${{ runner.os }}" == "Windows" ]; then
           ./${{ matrix.build_type }}/debug_macro_basic_example.exe
           ./${{ matrix.build_type }}/debug_macro_advanced_example.exe
         else
@@ -106,7 +106,7 @@ jobs:
           ./debug_macro_advanced_example
         fi
 
-  # Optional: Additional workflow for code analysis
+  # 可选：代码分析
   code-analysis:
     runs-on: ubuntu-latest
     steps:
