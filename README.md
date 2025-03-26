@@ -8,7 +8,7 @@ __
     <i><b>一个现代、强大的C++23日志输出库</b></i>
     <br />
     <a href="https://github.com/RFoe/debug_macro"><strong>探索项目文档 »</strong></a>
-  __(std::ranges::range)  <br />
+   <br />
     <br />
     <a href="https://github.com/RFoe/debug_macro/issues"><i>报告Bug</i></a>
     ·
@@ -19,9 +19,7 @@ __
 ## _容器适配器_ 项目状态
 
 [![GitHub stars](https://img.shields.io/github/stars/RFoe/debug_macro?style=social)](https://github.com/RFoe/debug_macro)
-[![GitHub forks
-
-##](https://img.shields.io/github/forks/RFoe/debug_macro?style=social)](https://github.com/RFoe/debug_macro)
+[![GitHub forks](https://img.shields.io/github/forks/RFoe/debug_macro?style=social)](https://github.com/RFoe/debug_macro)
 [![License](https://img.shields.io/github/license/RFoe/debug_macro)](https://github.com/RFoe/debug_macro/blob/main/LICENSE)
 [![C++23](https://img.shields.io/badge/C%2B%2B-23-blue.svg)](https://en.cppreference.com/w/cpp/compiler_support)
 [![Build Status](https://github.com/RFoe/debug_macro/workflows/_`debug_macro`%2_0CI/badge.svg)](https://github.com/RFoe/debug_macro/actions)
@@ -32,7 +30,7 @@ __
 - [项目概述](#-项目概述)
 - [特性](#-特性)
 - [安装](#-安装)
-- [使用指南](#-使用指南)__(std::ranges::range)
+- [使用指南](#-使用指南)
 - [高级定制](#-高级定制)
 - [类型支持](#-类型支持)
 - [路线图](#-路线图)
