@@ -2,8 +2,20 @@ name: Comprehensive Debug Macro CI
 
 on: 
   push:
+    paths-ignore:
+      - 'README.md'
+      - '.clang-format'
+      - '.gitignore'
+      - 'docs/**'
+      - '*.md'
     branches: [ main, master ]
   pull_request:
+    paths-ignore:
+      - 'README.md'
+      - '.clang-format'
+      - '.gitignore'
+      - 'docs/**'
+      - '*.md'  
     branches: [ main, master ]
 
 jobs:
