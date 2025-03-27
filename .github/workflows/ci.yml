@@ -25,21 +25,14 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest]
         compiler: 
-          - { name: gcc, cpp: 20, cc: g++, c: gcc }
           - { name: gcc, cpp: 23, cc: g++, c: gcc }
-          - { name: clang, cpp: 20, cc: clang++, c: clang }
           - { name: clang, cpp: 23, cc: clang++, c: clang }
-          - { name: msvc, cpp: 20, cc: cl, c: cl }
           - { name: msvc, cpp: 23, cc: cl, c: cl }
         build_type: [Debug, Release]
         exclude:
           # 排除不兼容的组合
           - os: windows-latest
-            compiler: { name: gcc, cpp: 20, cc: g++, c: gcc }
-          - os: windows-latest
             compiler: { name: gcc, cpp: 23, cc: g++, c: gcc }
-          - os: windows-latest
-            compiler: { name: clang, cpp: 20, cc: clang++, c: clang }
           - os: windows-latest
             compiler: { name: clang, cpp: 23, cc: clang++, c: clang }
 
