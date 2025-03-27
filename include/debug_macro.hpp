@@ -316,6 +316,10 @@ __nameof() noexcept {
 /*                                 type traits                                */
 /* -------------------------------------------------------------------------- */
 
+template <typename _Container>
+struct __container_adactor_ref : public _Container {
+  using _Container::c;
+};
 template <typename T, template <typename...> typename Primary>
 struct __is_specialization_of : std::false_type {};
 template <template <class...> typename Primary, typename... Args>
@@ -338,6 +342,48 @@ struct __member_object_traits<_Ty _Uy::*> {
   using __memobj_ = _Ty;
   using __class_  = _Uy;
 };
+/* --------------------------------------------------------------------------
+ */
+/*                       get enumerator name at runtime */
+/* --------------------------------------------------------------------------
+ */
+
+template <typename _Ty,
+          auto __value_,
+          auto __max_,
+          auto __enumerator_ = _Ty(__value_)>
+static consteval auto
+__detect_enumerators() noexcept {
+  if constexpr (__value_ == __max_) {
+    return std::tuple<std::pair<_Ty, std::string_view>>{};
+  } else if constexpr (__nameof<__enumerator_>().empty()) {
+    return __detect_enumerators<_Ty, __value_ + 1, __max_>();
+  } else {
+    return std::tuple_cat(
+      std::make_tuple(std::make_pair(__enumerator_, __nameof<__enumerator_>())),
+      __detect_enumerators<_Ty, __value_ + 1, __max_>());
+  }
+}
+template <typename _Ty, typename _Uy = std::underlying_type_t<_Ty>>
+requires std::is_enum_v<_Ty> static constexpr auto
+__nameof(_Ty _Val) noexcept {
+  static constexpr auto __min_ =
+    (std::max)(std::make_signed_t<_Uy>(-28),
+               std::make_signed_t<_Uy>(std::numeric_limits<_Uy>::min()));
+  static constexpr auto __max_ =
+    (std::max)(std::make_signed_t<_Uy>(28),
+               std::make_signed_t<_Uy>(std::numeric_limits<_Uy>::max()));
+  static constexpr auto __collection_ =
+    __detect_enumerators<_Ty, __min_, __max_>();
+  return std::apply(
+    [_Val](auto const &...__enumerators) noexcept {
+      std::string_view __result;
+      ((__enumerators.first == _Val && (__result = __enumerators.second, 0)),
+       ...);
+      return __result;
+    },
+    __collection_);
+}
 /* -------------------------------------------------------------------------- */
 /*                    count data member of aggregate struct                   */
 /* -------------------------------------------------------------------------- */
@@ -547,213 +593,180 @@ using __overload_selector = typename std::disjunction<
 /*                          __format_impl despatcher                          */
 /* -------------------------------------------------------------------------- */
 
-template <typename _Ty, std::size_t _Np>
-std::string
-__format_impl(_Ty const &, std::integral_constant<std::size_t, _Np>) noexcept;
-template <typename _Ty, typename __selector_ = __overload_selector<_Ty>>
-__attribute__((__always_inline__, __artificial__)) inline std::string
-__format(_Ty const &__val) noexcept {
-  return __format_impl(__val, __selector_{});
-}
-/* -------------------------------------------------------------------------- */
-/*                           output straightforward                           */
-/* -------------------------------------------------------------------------- */
-
-__attribute__((__always_inline__, __artificial__)) inline std::string
-__format_impl(auto const &__val,
-              std::integral_constant<std::size_t, 0UZ>) noexcept {
-  return std::format("{}", __val);
-}
-/* -------------------------------------------------------------------------- */
-/*                           string-like | character                          */
-/* -------------------------------------------------------------------------- */
-
-template <typename _Ty>
-__attribute__((__always_inline__, __artificial__)) inline std::string
-__format_impl(_Ty const &__val,
-              std::integral_constant<std::size_t, 1UZ>) noexcept {
-  if constexpr (std::is_same_v<_Ty, char>) {
-    return std::format(R"('{}')", __val);
-  } else {
-    return std::format(R"("{}")", __val);
+struct __formatter {
+  template <typename _Ty, typename __selector_ = __overload_selector<_Ty>>
+  static std::string __format(_Ty const &__val) noexcept {
+    return __format_impl(__val, __selector_{});
   }
-}
-/* -------------------------------------------------------------------------- */
-/*        requires(_Tp& __t) { ranges::begin(__t); ranges::end(__t); }        */
-/* -------------------------------------------------------------------------- */
+  /* --------------------------------------------------------------------------
+   */
+  /*                           output straightforward */
+  /* --------------------------------------------------------------------------
+   */
 
-template <typename _Ty>
-std::string
-__format_impl(_Ty const &__range,
-              std::integral_constant<std::size_t, 2UZ>) noexcept {
-  std::string __result;
-  __result.append("{");
-  for (auto const &__val: __range) {
-    std::format_to(std::back_inserter(__result), "{}, ", __format(__val));
+  static std::string __format_impl(
+    auto const &__val, std::integral_constant<std::size_t, 0UZ>) noexcept {
+    return std::format("{}", __val);
   }
-  if (!std::ranges::empty(__range)) [[likely]] {
-    __result.pop_back();
-    __result.pop_back();
-  }
-  __result.append("}");
-  return __result;
-}
-/* -------------------------------------------------------------------------- */
-/*                        tuple-like | aggregate struct                       */
-/* -------------------------------------------------------------------------- */
+  /* --------------------------------------------------------------------------
+   */
+  /*                           string-like | character */
+  /* --------------------------------------------------------------------------
+   */
 
-template <typename _Ty>
-std::string
-__format_impl(_Ty const &__val,
-              std::integral_constant<std::size_t, 3UZ>) noexcept {
-  static constexpr auto __handler = []<typename... _Args>(
-                                      _Args const &...__xs) noexcept {
+  template <typename _Ty>
+  static std::string __format_impl(
+    _Ty const &__val, std::integral_constant<std::size_t, 1UZ>) noexcept {
+    if constexpr (std::is_same_v<_Ty, char>) {
+      return std::format(R"('{}')", __val);
+    } else {
+      return std::format(R"("{}")", __val);
+    }
+  }
+  /* --------------------------------------------------------------------------
+   */
+  /*        requires(_Tp& __t) { ranges::begin(__t); ranges::end(__t); } */
+  /* --------------------------------------------------------------------------
+   */
+
+  template <typename _Ty>
+  static std::string __format_impl(
+    _Ty const &__range, std::integral_constant<std::size_t, 2UZ>) noexcept {
     std::string __result;
-
-    __result.append("(");
-    (std::format_to(std::back_inserter(__result), "{}, ", __format(__xs)), ...);
-
-    if constexpr (sizeof...(__xs) > 0) {
+    __result.append("{");
+    for (auto const &__val: __range) {
+      std::format_to(std::back_inserter(__result), "{}, ", __format(__val));
+    }
+    if (!std::ranges::empty(__range)) [[likely]] {
       __result.pop_back();
       __result.pop_back();
     }
-    __result.append(")");
+    __result.append("}");
     return __result;
-  };
-  if constexpr (std::is_aggregate_v<_Ty>) {
-    return std::apply(__handler, __converts_from_aggregate(__val));
-  } else {
-    return std::apply(__handler, __val);
   }
-}
-/* -------------------------------------------------------------------------- */
-/*                                   variant                                  */
-/* -------------------------------------------------------------------------- */
+  /* --------------------------------------------------------------------------
+   */
+  /*                        tuple-like | aggregate struct */
+  /* --------------------------------------------------------------------------
+   */
 
-template <typename _Ty>
-std::string
-__format_impl(_Ty const &__val,
-              std::integral_constant<std::size_t, 4UZ>) noexcept {
-  return std::visit(
-    []<typename _Uy>(_Uy const &__x) noexcept {
-      return std::format("|{}|", __format(__x));
-    },
-    __val);
-}
-/* -------------------------------------------------------------------------- */
-/*                                  optional                                  */
-/* -------------------------------------------------------------------------- */
+  template <typename _Ty>
+  static std::string __format_impl(
+    _Ty const &__val, std::integral_constant<std::size_t, 3UZ>) noexcept {
+    static constexpr auto __handler =
+      []<typename... _Args>(_Args const &...__xs) noexcept {
+        std::string __result;
 
-template <typename _Uy>
-std::string
-__format_impl(std::optional<_Uy> const &__val,
-              std::integral_constant<std::size_t, 5UZ>) noexcept {
-  if (!__val.has_value()) { return "(null)"; }
-  return std::format("|{}|", __format(*__val));
-}
-/* -------------------------------------------------------------------------- */
-/*                              container adaptor                             */
-/* -------------------------------------------------------------------------- */
+        __result.append("(");
+        (std::format_to(std::back_inserter(__result), "{}, ", __format(__xs)),
+         ...);
 
-template <typename _Container>
-struct __container_adactor_ref : public _Container {
-  using _Container::c;
+        if constexpr (sizeof...(__xs) > 0) {
+          __result.pop_back();
+          __result.pop_back();
+        }
+        __result.append(")");
+        return __result;
+      };
+    if constexpr (std::is_aggregate_v<_Ty>) {
+      return std::apply(__handler, __converts_from_aggregate(__val));
+    } else {
+      return std::apply(__handler, __val);
+    }
+  }
+  /* --------------------------------------------------------------------------
+   */
+  /*                                   variant */
+  /* --------------------------------------------------------------------------
+   */
+
+  template <typename _Ty>
+  static std::string __format_impl(
+    _Ty const &__val, std::integral_constant<std::size_t, 4UZ>) noexcept {
+    return std::visit(
+      []<typename _Uy>(_Uy const &__x) noexcept {
+        return std::format("|{}|", __format(__x));
+      },
+      __val);
+  }
+  /* --------------------------------------------------------------------------
+   */
+  /*                                  optional */
+  /* --------------------------------------------------------------------------
+   */
+
+  template <typename _Uy>
+  static std::string __format_impl(
+    std::optional<_Uy> const &__val,
+    std::integral_constant<std::size_t, 5UZ>) noexcept {
+    if (!__val.has_value()) { return "(null)"; }
+    return std::format("|{}|", __format(*__val));
+  }
+  /* --------------------------------------------------------------------------
+   */
+  /*                              container adaptor */
+  /* --------------------------------------------------------------------------
+   */
+
+  template <typename _Ty>
+  static std::string __format_impl(
+    _Ty const &__val, std::integral_constant<std::size_t, 6UZ>) noexcept {
+    return __format(static_cast<__container_adactor_ref<_Ty> const &>(__val).c);
+  }
+  /* --------------------------------------------------------------------------
+   */
+  /*                      pointer | unique_ptr | shared_ptr */
+  /* --------------------------------------------------------------------------
+   */
+
+  template <typename _Ty>
+  static std::string __format_impl(
+    _Ty const &__val, std::integral_constant<std::size_t, 7UZ>) noexcept {
+    if (!!__val) [[unlikely]] { return "(nullptr)"; }
+    if constexpr (std::is_pointer_v<_Ty>) {
+      return std::format("{}", static_cast<void *>(__val));
+    } else if constexpr (__is_specialization_of_v<_Ty, std::unique_ptr> ||
+                         __is_specialization_of_v<_Ty, std::shared_ptr>) {
+      return std::format("{}", static_cast<void *>(__val.get()));
+    } else {
+      std::format("{}", __val.lock().get());
+    }
+  }
+  /* --------------------------------------------------------------------------
+   */
+  /*                                 enumerator */
+  /* --------------------------------------------------------------------------
+   */
+
+  template <typename _Ty>
+  static std::string __format_impl(
+    _Ty const &__val, std::integral_constant<std::size_t, 8UZ>) noexcept {
+    using _Uy = std::underlying_type_t<_Ty>;
+    if (auto __name = __nameof(__val); __name.empty()) [[unlikely]] {
+      return std::format("{}({})", __nameof<_Ty>(), _Uy(__val));
+    } else {
+      return std::format("{}::{}({})", __nameof<_Ty>(), __name, _Uy(__val));
+    }
+  }
+  /* --------------------------------------------------------------------------
+   */
+  /*                         data member object pointer */
+  /* --------------------------------------------------------------------------
+   */
+
+  template <typename _Ty>
+  static std::string __format_impl(
+    _Ty const &__val, std::integral_constant<std::size_t, 9UZ>) noexcept {
+    using _Uy = typename __member_object_traits<_Ty>::__class_;
+    static_assert(std::is_standard_layout_v<_Uy>);
+    auto __result =
+      reinterpret_cast<std::size_t>(&reinterpret_cast<char const volatile &>(
+        static_cast<_Uy *>(nullptr)->*__val));
+    return std::format("{}", __result);
+  }
 };
-template <typename _Ty>
-std::string
-__format_impl(_Ty const &__val,
-              std::integral_constant<std::size_t, 6UZ>) noexcept {
-  return __format(static_cast<__container_adactor_ref<_Ty> const &>(__val).c);
-}
 /* -------------------------------------------------------------------------- */
-/*                      pointer | unique_ptr | shared_ptr                     */
-/* -------------------------------------------------------------------------- */
-
-template <typename _Ty>
-__attribute__((__always_inline__, __artificial__)) inline std::string
-__format_impl(_Ty const &__val,
-              std::integral_constant<std::size_t, 7UZ>) noexcept {
-  if (!!__val) [[unlikely]] { return "(nullptr)"; }
-  if constexpr (std::is_pointer_v<_Ty>) {
-    return std::format("{}", static_cast<void *>(__val));
-  } else if constexpr (__is_specialization_of_v<_Ty, std::unique_ptr> ||
-                       __is_specialization_of_v<_Ty, std::shared_ptr>) {
-    return std::format("{}", static_cast<void *>(__val.get()));
-  } else {
-    std::format("{}", __val.lock().get());
-  }
-}
-/* -------------------------------------------------------------------------- */
-/*                       get enumerator name at runtime                       */
-/* -------------------------------------------------------------------------- */
-
-template <typename _Ty,
-          auto __value_,
-          auto __max_,
-          auto __enumerator_ = _Ty(__value_)>
-consteval auto
-__detect_enumerators() noexcept {
-  if constexpr (__value_ == __max_) {
-    return std::tuple<std::pair<_Ty, std::string_view>>{};
-  } else if constexpr (__nameof<__enumerator_>().empty()) {
-    return __detect_enumerators<_Ty, __value_ + 1, __max_>();
-  } else {
-    return std::tuple_cat(
-      std::make_tuple(std::make_pair(__enumerator_, __nameof<__enumerator_>())),
-      __detect_enumerators<_Ty, __value_ + 1, __max_>());
-  }
-}
-template <typename _Ty, typename _Uy = std::underlying_type_t<_Ty>>
-requires std::is_enum_v<_Ty> constexpr auto
-__nameof(_Ty _Val) noexcept {
-  static constexpr auto __min_ =
-    (std::max)(std::make_signed_t<_Uy>(-28),
-               std::make_signed_t<_Uy>(std::numeric_limits<_Uy>::min()));
-  static constexpr auto __max_ =
-    (std::max)(std::make_signed_t<_Uy>(28),
-               std::make_signed_t<_Uy>(std::numeric_limits<_Uy>::max()));
-  static constexpr auto __collection_ =
-    __detect_enumerators<_Ty, __min_, __max_>();
-  return std::apply(
-    [_Val](auto const &...__enumerators) noexcept {
-      std::string_view __result;
-      ((__enumerators.first == _Val && (__result = __enumerators.second, 0)),
-       ...);
-      return __result;
-    },
-    __collection_);
-}
-/* -------------------------------------------------------------------------- */
-/*                                 enumerator                                 */
-/* -------------------------------------------------------------------------- */
-
-template <typename _Ty, typename _Uy = std::underlying_type_t<_Ty>>
-__attribute__((__always_inline__, __artificial__)) inline std::string
-__format_impl(_Ty const &__val,
-              std::integral_constant<std::size_t, 8UZ>) noexcept {
-  if (auto __name = __nameof(__val); __name.empty()) [[unlikely]] {
-    return std::format("{}({})", __nameof<_Ty>(), _Uy(__val));
-  } else {
-    return std::format("{}::{}({})", __nameof<_Ty>(), __name, _Uy(__val));
-  }
-}
-/* -------------------------------------------------------------------------- */
-/*                         data member object pointer                         */
-/* -------------------------------------------------------------------------- */
-
-template <typename _Ty,
-          typename _Uy = typename __member_object_traits<_Ty>::__class_>
-__attribute__((__always_inline__, __artificial__)) inline std::string
-__format_impl(_Ty const &__val,
-              std::integral_constant<std::size_t, 9UZ>) noexcept {
-  static_assert(std::is_standard_layout_v<_Uy>);
-  auto __result =
-    reinterpret_cast<std::size_t>(&reinterpret_cast<char const volatile &>(
-      static_cast<_Uy *>(nullptr)->*__val));
-  return std::format("{}", __result);
-}
-/* -------------------------------------------------------------------------- */
-/*                           shortcut long names                              */
+/*                             shortcut long name                             */
 /* -------------------------------------------------------------------------- */
 
 __attribute__((__always_inline__, __artificial__)) inline std::string_view
@@ -784,14 +797,12 @@ __output(char const                   *__path,
   if constexpr (sizeof...(_Args) > 0) {
     std::puts("{");
     [&]<std::size_t... _Is>(std::index_sequence<_Is...>) noexcept {
-      ((void)(std::cout
-              << "\t" << __colorfully{_S_blue, __names[_Is]} << " = "
-              << __colorfully{_S_bright_red,
-                              __format_impl(__vals,
-                                            __overload_selector<
-                                              std::remove_cvref_t<_Args>>{})}
-              << " (" << __colorfully{_S_bright_yellow, __nameof<_Args>()}
-              << ")\n"),
+      ((void)(std::cout << "\t" << __colorfully{_S_blue, __names[_Is]} << " = "
+                        << __colorfully{_S_bright_red,
+                                        __formatter::__format(__vals)}
+                        << " ("
+                        << __colorfully{_S_bright_yellow, __nameof<_Args>()}
+                        << ")\n"),
        ...);
       std::puts("}");
     }(std::index_sequence_for<_Args...>{});
