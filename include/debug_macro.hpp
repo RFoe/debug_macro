@@ -39,11 +39,16 @@ License (MIT):
 
 #include <format>
 #include <iostream>
+#include <list>
+#include <map>
 #include <memory>
 #include <queue>
 #include <ranges>
+#include <set>
 #include <stack>
 #include <type_traits>
+#include <unordered_map>
+#include <unordered_set>
 #include <variant>
 
 /* -------------------------------------------------------------------------- */
@@ -321,13 +326,17 @@ template <typename _Container>
 struct __container_adactor_ref : public _Container {
   using _Container::c;
 };
-template <typename T, template <typename...> typename Primary>
+template <typename _Ty, template <typename...> typename _Primary>
 struct __is_specialization_of : std::false_type {};
-template <template <class...> typename Primary, typename... Args>
-struct __is_specialization_of<Primary<Args...>, Primary> : std::true_type {};
-template <typename T, template <typename...> typename Primary>
+template <template <class...> typename _Primary, typename... _Args>
+struct __is_specialization_of<_Primary<_Args...>, _Primary> : std::true_type {};
+template <typename _Ty, template <typename...> typename _Primary>
 static constexpr bool __is_specialization_of_v =
-  __is_specialization_of<T, Primary>::value;
+  __is_specialization_of<_Ty, _Primary>::value;
+
+template <typename _Ty, template <typename...> typename... _Primarys>
+static constexpr bool __is_any_specialization_of_v =
+  bool((__is_specialization_of_v<_Ty, _Primarys> || ...));
 namespace __switch {
 template <bool _Val, std::size_t _Np> struct __case : std::bool_constant<_Val> {
   using type = std::integral_constant<std::size_t, _Np>;
@@ -343,6 +352,17 @@ struct __member_object_traits<_Ty _Uy::*> {
   using __memobj_ = _Ty;
   using __class_  = _Uy;
 };
+template <typename _Ty> concept __non_linear_container =
+  __is_any_specialization_of_v<_Ty,
+                               std::list,
+                               std::map,
+                               std::multimap,
+                               std::unordered_map,
+                               std::unordered_multimap,
+                               std::unordered_set,
+                               std::unordered_multiset,
+                               std::set,
+                               std::multiset>;
 /* --------------------------------------------------------------------------
  */
 /*                       get enumerator name at runtime */
@@ -634,7 +654,11 @@ struct __formatter {
   static std::string __format_impl(
     _Ty const &__range, std::integral_constant<std::size_t, 2UZ>) noexcept {
     std::string __result;
-    __result.append("{");
+    if constexpr (__non_linear_container<_Ty>) {
+      __result.append("{");
+    } else {
+      __result.append("[");
+    }
     for (auto const &__val: __range) {
       std::format_to(std::back_inserter(__result), "{}, ", __format(__val));
     }
@@ -642,7 +666,11 @@ struct __formatter {
       __result.pop_back();
       __result.pop_back();
     }
-    __result.append("}");
+    if constexpr (__non_linear_container<_Ty>) {
+      __result.append("}");
+    } else {
+      __result.append("]");
+    }
     return __result;
   }
   /* --------------------------------------------------------------------------
@@ -654,25 +682,37 @@ struct __formatter {
   template <typename _Ty>
   static std::string __format_impl(
     _Ty const &__val, std::integral_constant<std::size_t, 3UZ>) noexcept {
-    static constexpr auto __handler =
-      []<typename... _Args>(_Args const &...__xs) noexcept {
-        std::string __result;
-
-        __result.append("(");
-        (std::format_to(std::back_inserter(__result), "{}, ", __format(__xs)),
-         ...);
-
-        if constexpr (sizeof...(__xs) > 0) {
-          __result.pop_back();
-          __result.pop_back();
-        }
-        __result.append(")");
-        return __result;
-      };
-    if constexpr (std::is_aggregate_v<_Ty>) {
-      return std::apply(__handler, __converts_from_aggregate(__val));
+    if constexpr (__is_specialization_of_v<_Ty, std::pair>) {
+      return std::format(
+        "{} : {}", __format(__val.first), __format(__val.second));
     } else {
-      return std::apply(__handler, __val);
+      static constexpr auto __handler =
+        []<typename... _Args>(_Args const &...__xs) noexcept {
+          std::string __result;
+          if constexpr (std::is_aggregate_v<_Ty>) {
+            __result.append("{");
+          } else {
+            __result.append("(");
+          }
+          (std::format_to(std::back_inserter(__result), "{}, ", __format(__xs)),
+           ...);
+
+          if constexpr (sizeof...(__xs) > 0) {
+            __result.pop_back();
+            __result.pop_back();
+          }
+          if constexpr (std::is_aggregate_v<_Ty>) {
+            __result.append("}");
+          } else {
+            __result.append(")");
+          }
+          return __result;
+        };
+      if constexpr (std::is_aggregate_v<_Ty>) {
+        return std::apply(__handler, __converts_from_aggregate(__val));
+      } else {
+        return std::apply(__handler, __val);
+      }
     }
   }
   /* --------------------------------------------------------------------------
@@ -700,7 +740,7 @@ struct __formatter {
   static std::string __format_impl(
     std::optional<_Uy> const &__val,
     std::integral_constant<std::size_t, 5UZ>) noexcept {
-    if (!__val.has_value()) { return "(null)"; }
+    if (!__val.has_value()) { return "(std::nullopt)"; }
     return std::format("|{}|", __format(*__val));
   }
   /* --------------------------------------------------------------------------
@@ -723,7 +763,7 @@ struct __formatter {
   template <typename _Ty>
   static std::string __format_impl(
     _Ty const &__val, std::integral_constant<std::size_t, 7UZ>) noexcept {
-    if (!!__val) [[unlikely]] { return "(nullptr)"; }
+    if (!__val) [[unlikely]] { return "(nullptr)"; }
     if constexpr (std::is_pointer_v<_Ty>) {
       return std::format("{}", static_cast<void *>(__val));
     } else if constexpr (__is_specialization_of_v<_Ty, std::unique_ptr> ||
