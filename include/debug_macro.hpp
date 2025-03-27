@@ -37,6 +37,7 @@ License (MIT):
 /*                          standard library headers                          */
 /* -------------------------------------------------------------------------- */
 
+#include <format>
 #include <iostream>
 #include <memory>
 #include <queue>
