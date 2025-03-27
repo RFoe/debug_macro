@@ -41,6 +41,29 @@ set (CMAKE_CXX_STANDARD 23)
 set (CMAKE_CXX_STANDARD_REQUIRED ON)
 set (CMAKE_CXX_EXTENSIONS OFF)
 
+# 检测CPU核心数并设置并行编译
+include (ProcessorCount)
+ProcessorCount (CPU_CORES)
+
+# 如果检测到CPU核心数，则设置并行编译
+if (CPU_CORES GREATER 0)
+    # 针对不同编译器的并行编译设置
+    if (MSVC)
+        # Visual Studio编译器
+        add_compile_options ("/MP${CPU_CORES}")
+    elseif (CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
+        # GCC/G++编译器
+        add_compile_options ("-j${CPU_CORES}")
+    elseif (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+        # Clang编译器
+        add_compile_options ("-j${CPU_CORES}")
+    endif ()
+
+    # 设置并行构建选项
+    set (CMAKE_BUILD_TYPE_PARALLEL ON)
+    set (CMAKE_PARALLEL_COMPILE_JOBS ${CPU_CORES})
+endif ()
+
 # check if it is the main project
 string (COMPARE EQUAL ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_SOURCE_DIR}
                 IS_MAIN_PROJECT
@@ -48,7 +71,7 @@ string (COMPARE EQUAL ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_SOURCE_DIR}
 
 # add options to control the compilation of tests and benchmarks
 option (ENABLE_TESTS "Enable unit tests" ${IS_MAIN_PROJECT})
-option (ENABLE_BENCHMARKS "Enable performance benchmarks" OFF)
+option (ENABLE_BENCHMARKS "Enable performance benchmarks" ON)
 
 # create a library header file
 add_library (${PROJECT_NAME} INTERFACE)
@@ -66,6 +89,7 @@ endif ()
 
 # benchmark test configuration
 if (ENABLE_BENCHMARKS)
+    enable_testing ()
     add_subdirectory (benchmarks)
 endif ()
 
