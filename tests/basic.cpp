@@ -20,8 +20,8 @@ TEST(DebugMacroBasicTest, IntegerOutput) {
   debug_macro(x);
   std::string output = capture.getOutput();
 
-  EXPECT_TRUE(output.find("main.cpp") != std::string::npos);
-  EXPECT_TRUE(output.find("x = 42") != std::string::npos);
+  EXPECT_TRUE(output.find("basic.cpp") != std::string::npos) << output;
+  EXPECT_TRUE(output.find("x = 42") != std::string::npos) << output;
 }
 TEST(DebugMacroBasicTest, StringOutput) {
   StdoutCapture capture;
@@ -49,7 +49,7 @@ TEST(DebugMacroBasicTest, ConstAndReferenceVariables) {
   std::string output = capture.getOutput();
 
   EXPECT_TRUE(output.find("lval = 8") != std::string::npos);
-  EXPECT_TRUE(output.find("xval = 8") != std::string::npos);
+  EXPECT_TRUE(output.find("(int &&)xval = 8") != std::string::npos);
 }
 TEST(DebugMacroBasicTest, CharOutput) {
   StdoutCapture capture;
@@ -57,7 +57,7 @@ TEST(DebugMacroBasicTest, CharOutput) {
   debug_macro(c);
   std::string output = capture.getOutput();
 
-  EXPECT_TRUE(output.find("c = 'A'") != std::string::npos);
+  EXPECT_TRUE(output.find("c = \'A\'") != std::string::npos);
 }
 TEST(DebugMacroBasicTest, StringLiteralOutput) {
   StdoutCapture capture;

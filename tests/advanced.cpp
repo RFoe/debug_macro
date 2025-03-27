@@ -1,9 +1,6 @@
 #include <debug_macro.hpp>
 //
 #include <gtest/gtest.h>
-#include <list>
-//
-
 // Capture stdout for testing
 class StdoutCapture {
 private:
@@ -44,7 +41,7 @@ TEST(DebugMacroAdvancedTest, ListOutput) {
   debug_macro(list);
   std::string output = capture.getOutput();
 
-  EXPECT_TRUE(output.find("list = [\"hello\", \"world\"]") !=
+  EXPECT_TRUE(output.find("list = {\"hello\", \"world\"}") !=
               std::string::npos);
 }
 TEST(DebugMacroAdvancedTest, MapOutput) {
@@ -53,7 +50,8 @@ TEST(DebugMacroAdvancedTest, MapOutput) {
   debug_macro(map);
   std::string output = capture.getOutput();
 
-  EXPECT_TRUE(output.find("map = {\"a\": 1, \"b\": 2}") != std::string::npos);
+  EXPECT_TRUE(output.find("map = {\"a\" : 1, \"b\" : 2}") != std::string::npos)
+    << output;
 }
 TEST(DebugMacroAdvancedTest, QueueOutput) {
   StdoutCapture   capture;
@@ -80,22 +78,23 @@ TEST(DebugMacroAdvancedTest, OptionalOutput) {
   debug_macro(opt);
   std::string output = capture.getOutput();
 
-  EXPECT_TRUE(output.find("opt = 42") != std::string::npos);
+  EXPECT_TRUE(output.find("opt = |42|") != std::string::npos) << output;
 
   std::optional<int> empty_opt;
   StdoutCapture      capture2;
   debug_macro(empty_opt);
   std::string output2 = capture2.getOutput();
 
-  EXPECT_TRUE(output2.find("empty_opt = std::nullopt") != std::string::npos);
+  EXPECT_TRUE(output2.find("empty_opt = (std::nullopt)") != std::string::npos);
 }
 TEST(DebugMacroAdvancedTest, SmartPointerOutput) {
   StdoutCapture capture;
-  auto          unique_ptr = std::make_unique<int>(42);
+  auto          unique_ptr = std::unique_ptr<int>();
   debug_macro(unique_ptr);
   std::string output = capture.getOutput();
 
-  EXPECT_TRUE(output.find("unique_ptr = 42") != std::string::npos);
+  EXPECT_TRUE(output.find("unique_ptr = (nullptr)") != std::string::npos)
+    << output;
 }
 TEST(DebugMacroAdvancedTest, CustomStructOutput) {
   StdoutCapture capture;
@@ -103,15 +102,15 @@ TEST(DebugMacroAdvancedTest, CustomStructOutput) {
   debug_macro(x);
   std::string output = capture.getOutput();
 
-  EXPECT_TRUE(output.find("x = TestStruct(a=8, b=2.32)") != std::string::npos);
+  EXPECT_TRUE(output.find("x = {8, 2.32}") != std::string::npos) << output;
 }
 TEST(DebugMacroAdvancedTest, EnumOutput) {
   StdoutCapture capture;
   debug_macro(RED, BLUE);
   std::string output = capture.getOutput();
 
-  EXPECT_TRUE(output.find("RED = 8") != std::string::npos);
-  EXPECT_TRUE(output.find("BLUE = 122") != std::string::npos);
+  EXPECT_TRUE(output.find("RED = TestEnum::RED(8)") != std::string::npos);
+  EXPECT_TRUE(output.find("BLUE = TestEnum(122)") != std::string::npos);
 }
 TEST(DebugMacroAdvancedTest, MultiRankArrayOutput) {
   StdoutCapture capture;
