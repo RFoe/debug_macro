@@ -37,6 +37,6 @@ set_tests_properties (
 
 # Optional: Add a custom target to run benchmarks
 add_custom_target (
-    run_benchmarks COMMAND ${CMAKE_CTEST_COMMAND} -L "tests"
+    run_tests COMMAND ${CMAKE_CTEST_COMMAND} -L "tests"
     COMMENT "Running performance benchmarks"
 )

@@ -102,7 +102,7 @@ string (COMPARE EQUAL ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_SOURCE_DIR}
 
 # add options to control the compilation of tests and benchmarks
 option (ENABLE_TESTS "Enable unit tests" ${IS_MAIN_PROJECT})
-option (ENABLE_BENCHMARKS "Enable performance benchmarks" OFF)
+option (ENABLE_BENCHMARKS "Enable performance benchmarks" ON)
 
 # Create header-only library
 add_library (${PROJECT_NAME} INTERFACE)
