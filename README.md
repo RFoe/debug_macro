@@ -169,7 +169,7 @@ _`debug_macro`_ 支持*广泛的类型输出*，包括但不限于：
 - `char[]`
 - `const char*`
 
-### _容器类型_(std::ranges::range)
+### _容器类型_(**_std::ranges::range_**)
 - `std::vector`
 - `std::list`
 - `std::deque`
@@ -187,10 +187,14 @@ _`debug_macro`_ 支持*广泛的类型输出*，包括但不限于：
 - `std::pair`
 - `aggregate struct`
 
+### _枚举_(**_支持打印枚举名称_**)
+- std::is_enum_v
+- std::is_scoped_enum_v
+
 ### _Others_
 - `std::optional`
 - `std::unique_ptr | std::shared_ptr | std::weak_ptr`
-- `... and more`
+- _`... And more`_
 
 ## 🗺️ 路线图
 
