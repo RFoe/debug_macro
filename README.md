@@ -7,7 +7,7 @@
   <p align="center">
     <i><b>一个现代、强大的C++23日志输出库</b></i>
     <br />
-    <a href="https://github.com/RFoe/debug_macro"><strong>document »</strong></a>
+    <a href="docs/references/"><strong>document »</strong></a>
    <br />
     <br />
     <a href="https://github.com/RFoe/debug_macro/issues"><i>bug report</i></a>
