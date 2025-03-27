@@ -24,6 +24,9 @@
 [![C++23](https://img.shields.io/badge/C%2B%2B-23-blue.svg)](https://en.cppreference.com/w/cpp/compiler_support)
 [![Build Status](https://github.com/RFoe/debug_macro/actions/workflows/ci.yml/badge.svg)](https://github.com/RFoe/debug_macro/actions)
 [![Benchmark](https://img.shields.io/badge/benchmarks-passing-brightgreen)](https://github.com/RFoe/debug_macro/actions)
+[![Clang Support](https://img.shields.io/badge/clang-supported-brightgreen)](https://clang.llvm.org/)
+[![GCC Support](https://img.shields.io/badge/gcc-supported-brightgreen)](https://gcc.gnu.org/)
+[![MSVC Support](https://img.shields.io/badge/msvc-not%20supported-red)](https://visualstudio.microsoft.com/)
 
 ## 📋 目录
 
@@ -53,7 +56,7 @@
 
 ### 🖼️ 性能基准测试
 
-![基准测试结果](docs/images/benchmark_cn.png)
+![基准测试结果](docs/images/benchmark_analysis.png)
 
 
 ## 🔧 安装
@@ -169,7 +172,7 @@ _`debug_macro`_ 支持*广泛的类型输出*，包括但不限于：
 - `char[]`
 - `const char*`
 
-### _容器类型_(**_std::ranges::range_**)
+### _容器类型_ (**_std::ranges::range_**)
 - `std::vector`
 - `std::list`
 - `std::deque`
@@ -188,8 +191,8 @@ _`debug_macro`_ 支持*广泛的类型输出*，包括但不限于：
 - `aggregate struct`
 
 ### _枚举_(**_支持打印枚举名称_**)
-- std::is_enum_v
-- std::is_scoped_enum_v
+- `std::is_enum_v`
+- `std::is_scoped_enum_v`
 
 ### _Others_
 - `std::optional`
@@ -198,11 +201,14 @@ _`debug_macro`_ 支持*广泛的类型输出*，包括但不限于：
 
 ## 🗺️ 路线图
 
-- [ ] 性能优化
-- [ ] 更多平台测试
-- [ ] 扩展格式化选项
-- [ ] 性能基准测试
+| `Task` | **Time Required** | **Assigned To** | **Current Status** | **Progress** | 
+|:---:|:---:|:---:|:---:|:---:|
+| **性能优化** | `> 5 days` | *未分配* | *进行中* | ✅  <br>基本完成<br/> |
+| **更多平台测试** | `> 5 days` | *未分配* | *进行中* | ✅  <br>主平台测试<br/>⬜️ <br>部分兼容性<br/> |
+| **扩展格式化选项** | `> 5 days` | *未分配* | *进行中* | ✅  <br>核心功能<br/>⬜️ <br>次要功能<br/> |
+| **性能基准测试** | `> 5 days` | *未分配* | *进行中* | ✅  <br>初步测试<br/>⬜️ <br>部分优化<br/> |
 
+ 
 ## 🤝 贡献
 
 我们欢迎各种形式的贡献！请参见 `CONTRIBUTING.md`。
