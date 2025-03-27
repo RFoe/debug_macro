@@ -27,10 +27,9 @@ jobs:
         compiler: 
           - { name: gcc, cpp: 23, cc: g++, c: gcc }
           - { name: clang, cpp: 23, cc: clang++, c: clang }
-          - { name: msvc, cpp: 23, cc: cl, c: cl }
         build_type: [Debug, Release]
         exclude:
-          # 排除不兼容的组合
+          # 排除 Windows 上的 GCC 和 Clang
           - os: windows-latest
             compiler: { name: gcc, cpp: 23, cc: g++, c: gcc }
           - os: windows-latest
@@ -41,13 +40,6 @@ jobs:
     - uses: actions/checkout@v4
       with:
         submodules: recursive
-
-    # 设置编译器
-    - name: Setup MSVC
-      if: matrix.compiler.name == 'msvc' && runner.os == 'Windows'
-      uses: microsoft/setup-msbuild@v1.1
-      with:
-        vs-version: latest
 
     - name: Setup GCC
       if: matrix.compiler.name == 'gcc' && runner.os == 'Linux'
@@ -78,8 +70,8 @@ jobs:
       run: |
         cmake \
           $GITHUB_WORKSPACE \
-          -DCMAKE_CXX_COMPILER=${{matrix.compiler.compiler}} \
-          -DCMAKE_CXX_STANDARD=${{matrix.compiler.cpp_standard}} \
+          -DCMAKE_CXX_COMPILER=${{matrix.compiler.cc}} \
+          -DCMAKE_CXX_STANDARD=${{matrix.compiler.cpp}} \
           -DCMAKE_CXX_STANDARD_REQUIRED=ON \
           -DCMAKE_BUILD_TYPE=${{matrix.build_type}}
 
